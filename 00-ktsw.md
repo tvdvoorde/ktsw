@@ -4,6 +4,7 @@
 
 ```bash
 sudo -i
+
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/01-admin-certificates.txt | sudo bash
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/02-admin-copycerts.txt | sudo bash
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/03-admin-configs.txt | sudo bash
@@ -21,11 +22,8 @@ curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/07-control-kube.txt
 
 kubectl get componentstatuses --kubeconfig /home/azureuser/admin.kubeconfig
 
-sudo -i
-
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/08-control0-rbac.txt | sudo bash
 
-sudo -i
 RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')
 EXTERNAL_IP=$(host ${RESOURCE_GROUP}control0.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
 curl https://${EXTERNAL_IP}:6443/healthz --insecure
@@ -44,6 +42,8 @@ curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/11-worker-install.t
 ## Phase 6 on CONTROL0
 
 ```bash
+sudo -i
+
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/12-admin-client.txt | sudo bash
 
 # --- wait ---
