@@ -74,7 +74,7 @@ cfssl gencert \
 
 # KUBELET
 
-for instance in worker0 worker1 worker2; do
+for instance in worker0 worker1; do
 cat > ${instance}-csr.json <<EOF
 {
   "CN": "system:node:${instance}",
@@ -93,9 +93,10 @@ cat > ${instance}-csr.json <<EOF
   ]
 }
 EOF
+
 RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')
 EXTERNAL_IP=$(host ${RESOURCE_GROUP}${instance}.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
-INTERNAL_IP=$(az network nic ip-config show -g "${RESOURCE_GROUP}" -n "ipconfig1" --nic-name ${instance}-nic01 --query "privateIpAddress" --out tsv)
+INTERNAL_IP=$(host ${instance}|awk '/has address/ { print $4 }')
 echo ${EXTERNAL_IP}
 echo ${INTERNAL_IP}
 
@@ -205,7 +206,8 @@ cfssl gencert \
 
 {
 RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')
-EXTERNAL_IP=$(host ${RESOURCE_GROUP}lbpubip.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
+EXTERNAL_IP=$(host ${RESOURCE_GROUP}${instance}.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
+
 cat > kubernetes-csr.json <<EOF
 {
   "CN": "kubernetes",
@@ -228,7 +230,7 @@ cfssl gencert \
   -ca=ca.pem \
   -ca-key=ca-key.pem \
   -config=ca-config.json \
-  -hostname=10.32.0.1,10.240.0.10,10.240.0.11,10.240.0.12,${EXTERNAL_IP},127.0.0.1,kubernetes.default \
+  -hostname=10.96.0.1,10.240.0.10,${EXTERNAL_IP},127.0.0.1,kubernetes.default \
   -profile=kubernetes \
   kubernetes-csr.json | cfssljson -bare kubernetes
 }

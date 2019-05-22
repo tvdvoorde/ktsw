@@ -1,7 +1,7 @@
 RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')
-EXTERNAL_IP=$(host ${RESOURCE_GROUP}lbpubip.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
+EXTERNAL_IP=$(host ${RESOURCE_GROUP}${instance}.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
 
-for instance in worker0 worker1 worker2; do
+for instance in worker0 worker1; do
   kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=ca.pem \
     --embed-certs=true \
