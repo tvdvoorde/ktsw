@@ -39,7 +39,7 @@ curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/10-worker-binaries.
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/11-worker-install.txt | sudo bash
 ```
 
-## Phase 6 on CONTROL0
+## Phase 3 on CONTROL0
 
 ```bash
 sudo -i
