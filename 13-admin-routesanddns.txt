@@ -1,0 +1,14 @@
+RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')
+az network route-table create -g ${RESOURCE_GROUP} -n kubernetes-routes
+az network vnet subnet update -g ${RESOURCE_GROUP} -n ${RESOURCE_GROUP}-vnet01-vlan01 --vnet-name ${RESOURCE_GROUP}-vnet01 --route-table kubernetes-routes
+for i in 0 1 2; do
+az network route-table route create -g ${RESOURCE_GROUP} \
+  -n kubernetes-route-10-200-${i}-0-24 \
+  --route-table-name kubernetes-routes \
+  --address-prefix 10.200.${i}.0/24 \
+  --next-hop-ip-address 10.240.0.2${i} \
+  --next-hop-type VirtualAppliance
+done
+az network route-table route list -g ${RESOURCE_GROUP} --route-table-name kubernetes-routes -o table
+kubectl apply -f https://raw.githubusercontent.com/tvdvoorde/kthw/master/coredns.yaml
+kubectl get pods -l k8s-app=kube-dns -n kube-system

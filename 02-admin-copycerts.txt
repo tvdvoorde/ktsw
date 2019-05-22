@@ -1,0 +1,7 @@
+for instance in worker0 worker1 worker2; do
+  scp -o StrictHostKeyChecking=no ca.pem ${instance}-key.pem ${instance}.pem azureuser@${instance}:~/
+done
+
+for instance in control0 control1 control2; do
+  scp -o StrictHostKeyChecking=no ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem service-account-key.pem service-account.pem azureuser@${instance}:~/
+done

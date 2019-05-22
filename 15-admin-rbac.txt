@@ -1,0 +1,80 @@
+{
+cat > dev-csr.json <<EOF
+{
+  "CN": "dev",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "Portland",
+      "O": "Kubernetes",
+      "OU": "Kubernetes The Hard Way",
+      "ST": "Oregon"
+    }
+  ]
+}
+EOF
+
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  dev-csr.json | cfssljson -bare dev
+}
+
+
+
+
+
+
+
+curl https://10.240.0.10:6443/api/v1/namespaces/default/pods --key admin-key.pem --cert admin.pem --cacert ca.pem
+
+curl https://10.240.0.10:6443/api/v1/namespaces/default/pods --key dev-key.pem --cert dev.pem --cacert ca.pem
+
+cat > role.yaml <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["list","get"]
+EOF
+
+cat > binding.yaml <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer-binding
+subjects:
+- kind: User
+  name: dev
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: developer
+  apiGroup: rbac.authorization.k8s.io
+EOF
+
+kubectl apply -f role.yaml
+
+kubectl apply -f binding.yaml
+
+kubectl auth can-i get pods --as dev
+
+kubectl auth can-i create pods --as dev
+
+curl https://10.240.0.10:6443/api/v1/namespaces/default/pods --key dev-key.pem --cert dev.pem --cacert ca.pem
+
+
+
+
+
+
+

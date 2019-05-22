@@ -1,0 +1,7 @@
+for instance in worker0 worker1 worker2; do
+  scp -o StrictHostKeyChecking=no ${instance}.kubeconfig kube-proxy.kubeconfig azureuser@${instance}:~/
+done
+
+for instance in control0 control1 control2; do
+  scp -o StrictHostKeyChecking=no admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig azureuser@${instance}:~/
+done
