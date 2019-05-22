@@ -1,11 +1,11 @@
-RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')
-EXTERNAL_IP=$(host ${RESOURCE_GROUP}control0.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
+# RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')
+# EXTERNAL_IP=$(host ${RESOURCE_GROUP}control0.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
 
 for instance in worker0 worker1; do
   kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=ca.pem \
     --embed-certs=true \
-    --server=https://${EXTERNAL_IP}:6443 \
+    --server=https://10.240.0.10:6443 \
     --kubeconfig=${instance}.kubeconfig
   kubectl config set-credentials system:node:${instance} \
     --client-certificate=${instance}.pem \
@@ -24,7 +24,7 @@ done
   kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=ca.pem \
     --embed-certs=true \
-    --server=https://${EXTERNAL_IP}:6443 \
+    --server=https://10.240.0.10:6443 \
     --kubeconfig=kube-proxy.kubeconfig
   kubectl config set-credentials system:kube-proxy \
     --client-certificate=kube-proxy.pem \

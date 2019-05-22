@@ -6,7 +6,7 @@ EXTERNAL_IP=$(host ${RESOURCE_GROUP}lbpubip.westeurope.cloudapp.azure.com|awk '/
 kubectl config set-cluster kubernetes-the-hard-way \
   --certificate-authority=ca.pem \
   --embed-certs=true \
-  --server=https://${EXTERNAL_IP}:6443
+  --server=https://127.0.0.1:6443
 
 kubectl config set-credentials admin \
   --client-certificate=admin.pem \

@@ -19,10 +19,10 @@ sudo ETCDCTL_API=3 etcdctl member list \
 
 ```
 
-## Phase 2 on CONTROL0/CONTROL1/CONTROL2
+## Phase 2 on CONTROL0
 
 ```
-curl https://raw.githubusercontent.com/tvdvoorde/kthw/master/07-control-kube-1.14.txt | sudo bash
+curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/07-control-kube.txt | sudo bash
 
 kubectl get componentstatuses --kubeconfig /home/azureuser/admin.kubeconfig
 ```
@@ -31,14 +31,14 @@ kubectl get componentstatuses --kubeconfig /home/azureuser/admin.kubeconfig
 
 ```
 sudo -i
-curl https://raw.githubusercontent.com/tvdvoorde/kthw/master/08-control0-rbac.txt | sudo bash
+curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/08-control0-rbac.txt | sudo bash
 ```
 ## Phase 4 on ADMIN
 
 ```
 sudo -i
 RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')
-EXTERNAL_IP=$(host ${RESOURCE_GROUP}lbpubip.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
+EXTERNAL_IP=$(host ${RESOURCE_GROUP}control0.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
 curl https://${EXTERNAL_IP}:6443/healthz --insecure
 curl --cacert ca.pem https://${EXTERNAL_IP}:6443/version
 ```
@@ -47,15 +47,15 @@ curl --cacert ca.pem https://${EXTERNAL_IP}:6443/version
 
 ```
 sudo -i
-curl https://raw.githubusercontent.com/tvdvoorde/kthw/master/10-worker-binaries-1.14.txt | sudo bash
+curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/10-worker-binaries.txt | sudo bash
 # --- wait ---
-curl https://raw.githubusercontent.com/tvdvoorde/kthw/master/11-worker-install-1.14.txt | sudo bash
+curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/11-worker-install.txt | sudo bash
 ```
 
 ## Phase 6 on ADMIN
 
 ```
-curl https://raw.githubusercontent.com/tvdvoorde/kthw/master/12-admin-client.txt | sudo bash
+curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/12-admin-client.txt | sudo bash
 
 # --- wait ---
 
@@ -72,7 +72,7 @@ kubectl get pods -o wide
 
 # DNS
 
-kubectl apply -f https://raw.githubusercontent.com/tvdvoorde/kthw/master/coredns-1.5.yaml
+kubectl apply -f https://raw.githubusercontent.com/tvdvoorde/ktsw/master/coredns-mum.yaml
 kubectl get pods -l k8s-app=kube-dns -n kube-system
 
 # --- wait ---

@@ -94,8 +94,8 @@ cat > ${instance}-csr.json <<EOF
 }
 EOF
 
-RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')
-EXTERNAL_IP=$(host ${RESOURCE_GROUP}${instance}.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
+# RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')
+# EXTERNAL_IP=$(host ${RESOURCE_GROUP}${instance}.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
 INTERNAL_IP=$(host ${instance}|awk '/has address/ { print $4 }')
 echo ${EXTERNAL_IP}
 echo ${INTERNAL_IP}
@@ -104,7 +104,7 @@ cfssl gencert \
   -ca=ca.pem \
   -ca-key=ca-key.pem \
   -config=ca-config.json \
-  -hostname=${instance},${EXTERNAL_IP},${INTERNAL_IP} \
+  -hostname=${instance},${INTERNAL_IP} \
   -profile=kubernetes \
   ${instance}-csr.json | cfssljson -bare ${instance}
 done
@@ -206,7 +206,7 @@ cfssl gencert \
 
 {
 RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')
-EXTERNAL_IP=$(host ${RESOURCE_GROUP}${instance}.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
+EXTERNAL_IP=$(host ${RESOURCE_GROUP}control0.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
 
 cat > kubernetes-csr.json <<EOF
 {
