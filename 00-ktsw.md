@@ -4,6 +4,7 @@
 
 ```bash
 sudo -i
+
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/01-admin-certificates.txt | sudo bash
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/02-admin-copycerts.txt | sudo bash
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/03-admin-configs.txt | sudo bash
@@ -38,9 +39,11 @@ curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/10-worker-binaries.
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/11-worker-install.txt | sudo bash
 ```
 
-## Phase 6 on CONTROL0
+## Phase 3 on CONTROL0
 
 ```bash
+sudo -i
+
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/12-admin-client.txt | sudo bash
 
 # --- wait ---
@@ -73,17 +76,13 @@ kubectl delete pod httpd
 kubectl delete service httpd
 kubectl delete pod busybox
 kubectl get all
-```
 
-## secrets
+# --- wait ---
 
-```bash
 kubectl create secret generic kubernetes-the-hard-way --from-literal="mykey=mydata"
-```
 
-on CONTROL0
+# --- wait ---
 
-```bash
 sudo ETCDCTL_API=3 etcdctl get --endpoints=https://127.0.0.1:2379 --cacert=/etc/etcd/ca.pem --cert=/etc/etcd/kubernetes.pem --key=/etc/etcd/kubernetes-key.pem /registry/secrets/default/kubernetes-the-hard-way | hexdump -C
 ```
 
