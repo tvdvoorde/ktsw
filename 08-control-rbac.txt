@@ -1,5 +1,3 @@
-# DO THIS ONLY ON ONE CONTROLLER!
-
 cat <<EOF | kubectl apply --kubeconfig /home/azureuser/admin.kubeconfig -f -
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole

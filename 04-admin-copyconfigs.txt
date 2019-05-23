@@ -5,3 +5,4 @@ done
 for instance in control0; do
   scp -o StrictHostKeyChecking=no admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig azureuser@${instance}:~/
 done
+

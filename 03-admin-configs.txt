@@ -97,3 +97,5 @@ done
     --kubeconfig=admin.kubeconfig
   kubectl config use-context default --kubeconfig=admin.kubeconfig
 }
+
+

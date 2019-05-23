@@ -5,3 +5,5 @@ done
 for instance in control0; do
   scp -o StrictHostKeyChecking=no ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem service-account-key.pem service-account.pem azureuser@${instance}:~/
 done
+
+

@@ -8,3 +8,5 @@ curl https://${EXTERNAL_IP}:6443/healthz --insecure
 curl --cacert ca.pem https://${EXTERNAL_IP}:6443/version
 
 
+
+

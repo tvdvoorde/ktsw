@@ -116,3 +116,5 @@ EOF
 kubectl get componentstatuses --kubeconfig /home/azureuser/admin.kubeconfig
 
 
+
+
