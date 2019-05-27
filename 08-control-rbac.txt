@@ -1,3 +1,4 @@
+
 cat <<EOF | kubectl apply --kubeconfig /home/azureuser/admin.kubeconfig -f -
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
@@ -19,7 +20,6 @@ rules:
     verbs:
       - "*"
 EOF
-
 
 cat <<EOF | kubectl apply --kubeconfig /home/azureuser/admin.kubeconfig -f -
 apiVersion: rbac.authorization.k8s.io/v1beta1
