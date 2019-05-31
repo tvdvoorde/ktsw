@@ -22,7 +22,7 @@ curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/07-control-kube.txt
 
 kubectl get componentstatuses --kubeconfig /home/azureuser/admin.kubeconfig
 
-curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/08-control0-rbac.txt | sudo bash
+curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/08-control-rbac.txt | sudo bash
 
 RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')
 EXTERNAL_IP=$(host ${RESOURCE_GROUP}control0.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
@@ -56,7 +56,7 @@ kubectl get nodes
 
 # DNS
 
-kubectl apply -f https://raw.githubusercontent.com/tvdvoorde/ktsw/master/coredns-mum.yaml
+kubectl apply -f https://raw.githubusercontent.com/tvdvoorde/ktsw/master/coredns15.yaml
 kubectl get pods -l k8s-app=kube-dns -n kube-system
 kubectl get pods --all-namespaces
 
@@ -110,6 +110,7 @@ EXTERNAL_IP=$(host ${RESOURCE_GROUP}control0.westeurope.cloudapp.azure.com|awk '
 scp -i c:\KUBERNETES\private.openssh azureuser@aks3141control0.westeurope.cloudapp.azure.com:/tmp/admin.kubeconfig.remote .
 ```
 
+```text
 curl https://40.119.151.98:6443/healthz --insecure
 curl --cacert ca.pem https://40.119.151.98:6443/version
 
@@ -123,3 +124,20 @@ c:\users\ted.van.der.voorde\kubectl run wordpress --image=wordpress:4.8-apache -
 c:\users\ted.van.der.voorde\kubectl expose pod wordpress --name=wordpress --type=NodePort 
 c:\users\ted.van.der.voorde\kubectl get service -o wide
 c:\users\ted.van.der.voorde\kubectl port-forward service/wordpress 8080:80
+```
+
+```text
+
+
+
+
+
+
+
+
+
+
+
+cat > dns.yaml <<EOF
+
+EOF
