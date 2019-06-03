@@ -5,11 +5,8 @@
 ```bash
 sudo -i
 
-curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/01-admin-certificates.txt | sudo bash
-curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/02-admin-copycerts.txt | sudo bash
-curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/03-admin-configs.txt | sudo bash
-curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/04-admin-copyconfigs.txt | sudo bash
-curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/05-admin-createcopysecret.txt | sudo bash
+curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/01-control.txt | sudo bash
+
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/06-control-etcd.txt | sudo bash
 
 sudo ETCDCTL_API=3 etcdctl member list \
