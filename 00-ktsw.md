@@ -6,7 +6,15 @@
 sudo -i
 
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/01-control.txt | sudo bash
+```
 
+or
+
+```bash
+curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/01-control-openssl.txt | sudo bash
+```
+
+```bash
 curl https://raw.githubusercontent.com/tvdvoorde/ktsw/master/06-control-etcd.txt | sudo bash
 
 sudo ETCDCTL_API=3 etcdctl member list \
@@ -80,8 +88,85 @@ kubectl create secret generic kubernetes-the-hard-way --from-literal="mykey=myda
 
 # --- wait ---
 
+# RBAC groups example
+
+cat > role.yaml <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tester
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["list","get"]
+EOF
+
+cat > binding.yaml <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tester-binding
+subjects:
+  - kind: User
+    name: testuser
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: tester
+  apiGroup: rbac.authorization.k8s.io
+EOF
+
+kubectl apply -f role.yaml
+kubectl apply -f binding.yaml
+
+openssl genrsa -out testuser.key 2048
+openssl req -new -key testuser.key -subj "/CN=testuser" -out testuser.csr
+openssl x509 -req -in testuser.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out testuser.crt -days 1000
+
+kubectl get pods --as testuser
+
+kubectl config set-cluster bla \
+  --certificate-authority=ca.pem \
+  --embed-certs=true \
+  --server=https://127.0.0.1:6443 \
+  --kubeconfig=testuser.kubeconfig
+kubectl config set-credentials testuser \
+  --client-certificate=testuser.crt \
+  --client-key=testuser.key \
+  --embed-certs=true \
+  --kubeconfig=testuser.kubeconfig
+kubectl config set-context default \
+  --cluster=bla \
+  --user=testuser \
+  --kubeconfig=testuser.kubeconfig
+
+kubectl get pods --kubeconfig=testuser.kubeconfig
+
+
+
+kubectl config use-context default --kubeconfig=admin.kubeconfig
+
+
+kubectl get pods --server https://127.0.0.1:6443 --certificate-authority=ca.pem --client-certificate=testuser.crt --client-key=testuser.key
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 sudo ETCDCTL_API=3 etcdctl get --endpoints=https://127.0.0.1:2379 --cacert=/etc/etcd/ca.pem --cert=/etc/etcd/kubernetes.pem --key=/etc/etcd/kubernetes-key.pem /registry/secrets/default/kubernetes-the-hard-way | hexdump -C
 ```
+
+# --- DEBUGS ---
 
 ```bash
 RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')

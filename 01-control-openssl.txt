@@ -1,0 +1,266 @@
+# CA
+
+  openssl genrsa -out ca-key.pem 2048
+  openssl req -x509 -new -nodes -key ca-key.pem -subj "/CN=Kubernetes" -days 10000 -out ca.pem
+
+# ADMIN
+
+openssl genrsa -out admin-key.pem 2048
+openssl req -new -key admin-key.pem -out admin.csr -subj "/CN=admin/O=system:masters"
+openssl x509 -req -in admin.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out admin.pem -days 10000 
+
+# KUBELET
+
+for instance in worker0 worker1; do
+
+INTERNAL_IP=$(host ${instance}|awk '/has address/ { print $4 }')
+
+openssl genrsa -out ${instance}-key.pem 2048
+
+
+cat > ${instance}.conf <<EOF
+[ req ]
+default_bits = 2048
+prompt = no
+default_md = sha256
+req_extensions = req_ext
+distinguished_name = dn
+
+[ dn ]
+C = NL
+ST = ZH
+L = Den Haag
+O = system:nodes
+OU = IT
+CN = system:node:${instance}
+
+[ req_ext ]
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = ${instance}
+IP.1 = ${INTERNAL_IP}
+
+[ v3_ext ]
+authorityKeyIdentifier=keyid,issuer:always
+basicConstraints=CA:FALSE
+keyUsage=keyEncipherment,dataEncipherment
+extendedKeyUsage=serverAuth,clientAuth
+subjectAltName=@alt_names
+EOF
+
+openssl req -new -key ${instance}-key.pem -out ${instance}.csr -config ${instance}.conf
+openssl x509 -req -in ${instance}.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out ${instance}.pem -days 10000 -extensions v3_ext -extfile ${instance}.conf
+
+done
+
+
+
+
+# CONTROLLER MANAGER CLIENT CERTIFICATE
+
+openssl genrsa -out kube-controller-manager-key.pem 2048
+openssl req -new -key kube-controller-manager-key.pem -out kube-controller-manager.csr -subj "/CN=system:kube-controller-manager/O=system:kube-controller-manager"
+openssl x509 -req -in kube-controller-manager.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out kube-controller-manager.pem -days 10000 
+
+# KUBE PROXY CLIENT
+
+openssl genrsa -out kube-proxy-key.pem 2048
+openssl req -new -key kube-proxy-key.pem -out kube-proxy.csr -subj "/CN=system:kube-proxy/O=system:node-proxier"
+openssl x509 -req -in kube-proxy.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out kube-proxy.pem -days 10000 
+
+# SCHEDULER
+
+openssl genrsa -out kube-scheduler-key.pem 2048
+openssl req -new -key kube-scheduler-key.pem -out kube-scheduler.csr -subj "/CN=system:kube-scheduler/O=system:kube-scheduler"
+openssl x509 -req -in kube-scheduler.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out kube-scheduler.pem -days 10000 
+
+# API
+
+openssl genrsa -out kubernetes-key.pem 2048
+
+RESOURCE_GROUP=$(curl --silent  http://169.254.169.254/Metadata/instance?api-version=2017-08-01 -H metadata:true|jq -r '.compute.resourceGroupName')
+EXTERNAL_IP=$(host ${RESOURCE_GROUP}control0.westeurope.cloudapp.azure.com|awk '/has address/ { print $4 }')
+
+
+cat > kubernetes.conf <<EOF
+[ req ]
+default_bits = 2048
+prompt = no
+default_md = sha256
+req_extensions = req_ext
+distinguished_name = dn
+
+[ dn ]
+C = NL
+ST = ZH
+L = Den Haag
+O = IT
+OU = IT
+CN = kubernetes
+
+[ req_ext ]
+subjectAltName = @alt_names
+
+[ alt_names ]
+
+DNS.1 = kubernetes
+DNS.2 = kubernetes.default
+IP.1 = 10.96.0.1
+IP.2 = 10.240.0.10
+IP.3 = ${EXTERNAL_IP}
+IP.4 = 127.0.0.1
+
+[ v3_ext ]
+authorityKeyIdentifier=keyid,issuer:always
+basicConstraints=CA:FALSE
+keyUsage=keyEncipherment,dataEncipherment
+extendedKeyUsage=serverAuth,clientAuth
+subjectAltName=@alt_names
+EOF
+
+openssl req -new -key kubernetes-key.pem -out kubernetes.csr -config kubernetes.conf
+openssl x509 -req -in kubernetes.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out kubernetes.pem -days 10000 -extensions v3_ext -extfile kubernetes.conf
+
+
+
+# SERVICE accounts
+
+openssl genrsa -out service-account-key.pem 2048
+openssl req -new -key service-account-key.pem -out service-account.csr -subj "/CN=service-accounts"
+openssl x509 -req -in service-account.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out service-account.pem -days 10000 
+
+
+for instance in worker0 worker1; do
+  scp -o StrictHostKeyChecking=no ca.pem ${instance}-key.pem ${instance}.pem azureuser@${instance}:~/
+done
+
+for instance in control0; do
+  scp -o StrictHostKeyChecking=no ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem service-account-key.pem service-account.pem azureuser@${instance}:~/
+done
+
+
+for instance in worker0 worker1; do
+  kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://10.240.0.10:6443 \
+    --kubeconfig=${instance}.kubeconfig
+  kubectl config set-credentials system:node:${instance} \
+    --client-certificate=${instance}.pem \
+    --client-key=${instance}-key.pem \
+    --embed-certs=true \
+    --kubeconfig=${instance}.kubeconfig
+  kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=system:node:${instance} \
+    --kubeconfig=${instance}.kubeconfig
+  kubectl config use-context default --kubeconfig=${instance}.kubeconfig
+done
+
+
+
+  kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://10.240.0.10:6443 \
+    --kubeconfig=kube-proxy.kubeconfig
+  kubectl config set-credentials system:kube-proxy \
+    --client-certificate=kube-proxy.pem \
+    --client-key=kube-proxy-key.pem \
+    --embed-certs=true \
+    --kubeconfig=kube-proxy.kubeconfig
+  kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=system:kube-proxy \
+    --kubeconfig=kube-proxy.kubeconfig
+  kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
+
+
+# The kube-controller-manager Kubernetes Configuration File
+
+
+  kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://127.0.0.1:6443 \
+    --kubeconfig=kube-controller-manager.kubeconfig
+  kubectl config set-credentials system:kube-controller-manager \
+    --client-certificate=kube-controller-manager.pem \
+    --client-key=kube-controller-manager-key.pem \
+    --embed-certs=true \
+    --kubeconfig=kube-controller-manager.kubeconfig
+  kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=system:kube-controller-manager \
+    --kubeconfig=kube-controller-manager.kubeconfig
+  kubectl config use-context default --kubeconfig=kube-controller-manager.kubeconfig
+
+
+# The kube-scheduler Kubernetes Configuration File
+
+
+  kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://127.0.0.1:6443 \
+    --kubeconfig=kube-scheduler.kubeconfig
+  kubectl config set-credentials system:kube-scheduler \
+    --client-certificate=kube-scheduler.pem \
+    --client-key=kube-scheduler-key.pem \
+    --embed-certs=true \
+    --kubeconfig=kube-scheduler.kubeconfig
+  kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=system:kube-scheduler \
+    --kubeconfig=kube-scheduler.kubeconfig
+  kubectl config use-context default --kubeconfig=kube-scheduler.kubeconfig
+
+
+# The admin Kubernetes Configuration File
+
+  kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://127.0.0.1:6443 \
+    --kubeconfig=admin.kubeconfig
+  kubectl config set-credentials admin \
+    --client-certificate=admin.pem \
+    --client-key=admin-key.pem \
+    --embed-certs=true \
+    --kubeconfig=admin.kubeconfig
+  kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=admin \
+    --kubeconfig=admin.kubeconfig
+  kubectl config use-context default --kubeconfig=admin.kubeconfig
+
+
+for instance in worker0 worker1; do
+  scp -o StrictHostKeyChecking=no ${instance}.kubeconfig kube-proxy.kubeconfig azureuser@${instance}:~/
+done
+
+for instance in control0; do
+  scp -o StrictHostKeyChecking=no admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig azureuser@${instance}:~/
+done
+
+
+ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
+cat > encryption-config.yaml <<EOF
+kind: EncryptionConfig
+apiVersion: v1
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+            - name: key1
+              secret: ${ENCRYPTION_KEY}
+      - identity: {}
+EOF
+
+for instance in control0; do
+  scp -o StrictHostKeyChecking=no encryption-config.yaml azureuser@${instance}:~/
+done
+
